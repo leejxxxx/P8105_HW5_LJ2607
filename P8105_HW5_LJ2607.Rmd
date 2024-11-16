@@ -2,7 +2,7 @@
 title: "P8105_HW5_LJ2607"
 author: "Li Jiang"
 date: "2024-11-16"
-output:github_document
+output: github_document
 ---
 
 ```{r}
@@ -100,7 +100,7 @@ summary(summary_by_location)
 
 # homicide data for Baltimore
 baltimore_summary <- filter(summary_by_location, location == "Baltimore,MD")
-summary(baltimore_data)
+summary(baltimore_summary)
 ```
 
 Description:The dataset contains information on 50 locations with variables for total_cases and unresolved_cases. The total number of cases ranges from 208 to 5535, with an average of 1043.6 and a median of 690.5. Most locations have total cases clustered between the 25th percentile (448.2) and the 75th percentile (1289.0). Unresolved cases range from 0 to 387, with an average of 58.44 and a median of 38.5. The majority of unresolved cases fall between 13.0 (25th percentile) and 71.5 (75th percentile). The data reveals variability across locations, with some experiencing significantly higher total and unresolved cases than others.
