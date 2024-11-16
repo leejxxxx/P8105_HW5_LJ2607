@@ -4,3 +4,85 @@ author: "Li Jiang"
 date: "2024-11-16"
 output:github_document
 ---
+
+```{r}
+#load required packages
+library(tidyverse)
+library(ggplot2)
+
+library(rvest)
+library(purrr)
+library(broom)
+set.seed(1) 
+```
+
+#Problem2
+```{r}
+# Simulation parameters
+n <- 30
+sigma <- 5
+mu_values <- 0:6
+
+# Create simulation data frame
+simulation_results <- data.frame()
+for (current_mu in mu_values) {
+  for (iteration in 1:5000) {
+    simulated_data <- rnorm(n, mean = current_mu, sd = sigma)
+    test_outcome <- broom::tidy(t.test(simulated_data, mu = 0))
+    simulation_results <- rbind(simulation_results, 
+                                 c(current_mu, mean(simulated_data),test_outcome$p.value, test_outcome$p.value < 0.05))
+  }
+}
+
+# Assign column names
+colnames(simulation_results) <- c("mu", "mu_hat", "p_value", "reject_null")
+
+```
+
+
+```{r}
+#plot showing the power of the test and the true value of μ
+rejection_proportions <- aggregate(reject_null ~ mu, data = simulation_results, mean)
+
+ggplot(rejection_proportions, aes(x = mu, y = reject_null)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Proportion of Null Rejection vs. True Value of mu",
+       x = "True Value of mu",
+       y = "Proportion of Null Rejected") +
+  theme_minimal()
+```
+
+*Description: From this plot, we observe that as mu increases, the proportion of null hypotheses rejected also rises. This indicates that larger effect sizes lead to higher testing power for detecting the effect. When the effect size becomes sufficiently large, the proportion of null rejections approaches 1.
+
+```{r}
+# Calculate average estimates
+average_estimates <- aggregate(mu_hat ~ mu, data = simulation_results, mean)
+average_estimates_rejected <- aggregate(mu_hat ~ mu, data = simulation_results[simulation_results$reject_null == TRUE, ], mean)
+
+# Add group labels
+average_estimates$group <- "average_estimates"
+average_estimates_rejected$group <- "average_estimates_rejected"
+
+# Combine data frames
+combined_data <- rbind(average_estimates, average_estimates_rejected)
+
+# Plot the results
+ggplot(combined_data, aes(x = mu, y = mu_hat, color = group)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Average Estimate of mu_hat vs. True Value of mu",
+       x = "True Value of mu",
+       y = "Average Estimate of mu_hat") +
+  theme_minimal()
+
+```
+*Conclusion:The sample average of mu_hat for tests where the null is rejected is generally not equal to the true value of mu.It tends to be higher, particularly when mu is small, leading to an overestimation of the true effect size. However, as the effect size increases, the sample estimates align more closely with the true values.
+
+
+##Problem 3
+```{r}
+#read data
+homicide_data <- read_csv("data/homicide-data.csv")
+```
+
