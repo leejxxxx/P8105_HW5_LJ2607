@@ -84,5 +84,54 @@ ggplot(combined_data, aes(x = mu, y = mu_hat, color = group)) +
 ```{r}
 #read data
 homicide_data <- read_csv("data/homicide-data.csv")
+homicide_data <- homicide_data |> mutate(location = paste(city, state, sep = ","))
+```
+
+```{r}
+# Summarize homicides by location
+summary_by_location <- 
+  group_by(homicide_data, location) |>
+  summarize(
+    total_cases = n(),
+    unresolved_cases = length(which(disposition == "Closed without arrest" | disposition == "Open/no arrest"))
+  ) |>
+  filter(location != "Tulsa,AL")
+```
+
+```{r}
+# Get the homicide data for Baltimore
+baltimore_summary <- filter(summary_by_location, location == "Baltimore,MD")
+
+# Proportion test for Baltimore
+baltimore_prop_test <- prop.test(baltimore_summary[['unresolved_cases']], baltimore_summary[['total_cases']]) |> 
+  broom::tidy()
+```
+
+```{r}
+# Loop to calculate proportions for all locations
+tidy_summary <- data.frame()
+for (current_location in summary_by_location$location) {
+  temp_summary <- filter(summary_by_location, location == current_location)
+  temp_test <- merge(
+    temp_summary, 
+    select(
+      prop.test(temp_summary[['unresolved_cases']], temp_summary[['total_cases']]) |> 
+        broom::tidy(), 
+      c('estimate', 'conf.low', 'conf.high')
+    )
+  )
+  tidy_summary <- rbind(tidy_summary, temp_test)
+}
+```
+
+
+```{r}
+# Plotting the results
+tidy_summary |>
+  mutate(location = fct_reorder(location, estimate)) |>
+  ggplot(aes(x = location, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 80, hjust = 1.2))
 ```
 
